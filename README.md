@@ -19,6 +19,15 @@ npm install
 ``` 
 
 ## Run Development System
-```sh
+```
 npm run dev
+```
+
+## Create Users Role Admin
+Perintah untuk membuat role admin di postman
+```
+"username": "username"
+"email": "email@gmail.com"
+"password": "password"
+"role": "Admin"
 ```
