@@ -23,6 +23,13 @@ npm install
 npm run dev
 ```
 
+## Endpoint
+- ```/ticket``` - Untuk mendapatkan data ticket atau membuat data ticket baru
+- ```/ticketAnswered/:id``` - Untuk mendapatkan data ticket yang sudah terjawab berdasarkan id ticketAnswereds
+- ```/ticket/:number``` - Untuk menjawab ticket berdasarkan ticketNumber
+- ```/ticket/close/:number``` - Untuk menutup ticket berdasarkan ticketNumber
+- ```/ticket/:id``` - Untuk menghapus ticket berdasarkan id tickets
+
 ## Create Users Role Admin
 Perintah untuk membuat role admin di postman
 ```

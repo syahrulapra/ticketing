@@ -120,7 +120,7 @@ app.get('/ticket', authorize('Admin'), async (c) => {
   }
 })
 
-app.post('/ticket', authorize('Admin' || 'User'), async (c) => {
+app.post('/ticket', authorize('User'), async (c) => {
   const counter = await Counter.findOneAndUpdate(
     { id: "autoval" },
     { "$inc": { "seq": 1 } },
