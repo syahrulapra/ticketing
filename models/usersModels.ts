@@ -5,13 +5,6 @@ enum role {
     User = "User"
 }
 
-interface IUser extends Document {
-    username: string;
-    email: string;
-    password: string;
-    role: string;
-  }
-
 const usersSchema = new Schema(
 	{
 		username: {
@@ -34,6 +27,6 @@ const usersSchema = new Schema(
 	}
 )
 
-const Users = mongoose.model<IUser>('Users', usersSchema);
+const Users = mongoose.model('Users', usersSchema);
 
 export default Users

@@ -147,7 +147,7 @@ app.post('/ticket', authorize('Admin' || 'User'), async (c) => {
   }
 })
 
-app.get('/ticketAnswered/:id', async (c) => {
+app.get('/ticketAnswered/:id', authorize('User'), async (c) => {
   const id = c.req.param('id')
   const page: number = Number(c.req.query('page')) || 1
   const size: number = Number(c.req.query('size')) || 10
