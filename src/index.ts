@@ -168,7 +168,7 @@ app.get('/ticket/answered/:id', authorize('User'), async (c) => {
   }
 })
 
-app.post('/ticket/:number', authorize('Admin'), async (c) => {
+app.post('/ticket/answer/:number', authorize('Admin'), async (c) => {
   const number = c.req.param('number')
   
   try {
@@ -217,7 +217,7 @@ app.put('/ticket/close/:number', authorize('User'), async (c) => {
   }
 })
 
-app.delete('/ticket/:id', authorize('User'), async (c) => {
+app.delete('/ticket/delete/:id', authorize('User'), async (c) => {
   const id = c.req.param('id')
 
   if (!mongoose.Types.ObjectId.isValid(id)) {

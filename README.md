@@ -27,10 +27,10 @@ npm run dev
 - ```/register``` - Untuk membuat users (default role User)
 - ```/login``` - Untuk mendapatkan token
 - ```/ticket``` - Untuk mendapatkan data ticket atau membuat data ticket baru
-- ```/ticketAnswered/:id``` - Untuk mendapatkan data ticket yang sudah terjawab berdasarkan id ticketAnswereds
-- ```/ticket/:number``` - Untuk menjawab ticket berdasarkan ticketNumber
+- ```/ticket/answered/:id``` - Untuk mendapatkan data ticket yang sudah terjawab berdasarkan id ticketAnswereds
+- ```/ticket/answer/:number``` - Untuk menjawab ticket berdasarkan ticketNumber
 - ```/ticket/close/:number``` - Untuk menutup ticket berdasarkan ticketNumber
-- ```/ticket/:id``` - Untuk menghapus ticket berdasarkan id tickets
+- ```/ticket/delete/:id``` - Untuk menghapus ticket berdasarkan id tickets
 
 ## Create Users Role Admin
 Perintah untuk membuat role admin di postman
