@@ -24,6 +24,8 @@ npm run dev
 ```
 
 ## Endpoint
+- ```/register``` - Untuk membuat users (default role User)
+- ```/login``` - Untuk mendapatkan token
 - ```/ticket``` - Untuk mendapatkan data ticket atau membuat data ticket baru
 - ```/ticketAnswered/:id``` - Untuk mendapatkan data ticket yang sudah terjawab berdasarkan id ticketAnswereds
 - ```/ticket/:number``` - Untuk menjawab ticket berdasarkan ticketNumber
