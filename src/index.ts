@@ -64,7 +64,7 @@ app.use('/login', async (c) => {
   }
 })
 
-app.use('*', (c, next) => {
+app.use('/ticket/*', (c, next) => {
   const jwtMiddlewaare = jwt({
     secret: process.env.JWT_SECRET!,
   })
@@ -103,7 +103,7 @@ async (c) => {
   }
 })
 
-app.get('/ticket', authorize('Admin'), async (c) => {
+app.get('/ticket', authorize(['Admin', 'User']), async (c) => {
   const page: number = Number(c.req.query('page')) || 1
   const size: number = Number(c.req.query('size')) || 10
   const skip: number = (page - 1) * size
@@ -147,16 +147,19 @@ app.post('/ticket', authorize('User'), async (c) => {
   }
 })
 
-app.get('/ticketAnswered/:id', authorize('User'), async (c) => {
+app.get('/ticket/answered/:id', authorize('User'), async (c) => { 
   const id = c.req.param('id')
-  const page: number = Number(c.req.query('page')) || 1
-  const size: number = Number(c.req.query('size')) || 10
-  const skip: number = (page - 1) * size
   
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return c.json({ message: "id not found" }, { status: 404 })
+  }
+
   try {
     const ticket = await TicketAnswered.findById(id).populate('tickets')
-    .skip(skip)
-    .limit(size)
+
+    if(!ticket) {
+      return c.json({ message: "id not found" }, { status: 404 })
+    }
 
     return c.json({ tickets: ticket }, { status: 200 })
   } catch (err) {
@@ -171,14 +174,18 @@ app.post('/ticket/:number', authorize('Admin'), async (c) => {
   try {
     const { message } = await c.req.json()
 
-    await Ticket.updateOne({ ticketNumber: number }, {
+    const ticketUp = await Ticket.updateOne({ ticketNumber: number }, {
       status: "Answered"
     })
 
-    const tikets = await Ticket.findOne({ ticketNumber: number })
+    if(ticketUp.modifiedCount === 0) {
+      return c.json({ message: "ticketNumber not found" }, { status: 404 })
+    }
+
+    const ticket = await Ticket.findOne({ ticketNumber: number })
 
     const data = await TicketAnswered.create({
-      tickets: tikets?._id,
+      tickets: ticket?._id,
       message
     })
     
@@ -193,11 +200,15 @@ app.put('/ticket/close/:number', authorize('User'), async (c) => {
   const number = c.req.param('number')
   
   try {
-    await Ticket.updateOne({ ticketNumber: number }, {
-      status: "closed"
+    const ticket = await Ticket.updateOne({ ticketNumber: number }, {
+      status: "Closed"
     })
 
-    const data = await Ticket.find({ ticketNumber: number }) 
+    if(ticket.modifiedCount === 0) {
+      return c.json({ message: "ticketNumber not found" }, { status: 404 })
+    }
+
+    const data = await Ticket.findOne({ ticketNumber: number }) 
     
     return c.json({ message: "Closed", data: data }, { status: 201 })
   } catch(err) {
@@ -208,13 +219,19 @@ app.put('/ticket/close/:number', authorize('User'), async (c) => {
 
 app.delete('/ticket/:id', authorize('User'), async (c) => {
   const id = c.req.param('id')
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return c.json({ message: "id not found" }, { status: 404 })
+  }
+
   try {
-    const ticket = await Ticket.deleteOne({ _id: id })
-    if(ticket.deletedCount > 0) {
-      return c.json({message: "Deleted", id: id}, {status: 201})
-    } else {
-      return c.json({message: "No tickets deleted"}, {status: 404})
+    const ticket = await Ticket.findByIdAndDelete(id)
+
+    if(!ticket) {
+      return c.json({ message: "id not found" }, { status: 404 })
     }
+
+    return c.json({message: "Deleted", id: id}, {status: 201})
   } catch(err) {
     console.log(err)
     return c.json({message: "Vailed"}, {status: 500})
