@@ -1,10 +1,13 @@
 import { serve } from '@hono/node-server'
-import { Hono } from 'hono'
-import * as bcrypt from 'bcrypt'
-import { Ticket, Counter, TicketAnswered } from '../models/ticketModels';
-import mongoose from 'mongoose'
-import Users from '../models/usersModels';
+import { Context, Hono, Next } from 'hono'
+import { prettyJSON } from 'hono/pretty-json'
+import { logger } from 'hono/logger'
 import { jwt, sign } from 'hono/jwt'
+import { cors } from 'hono/cors'
+import mongoose from 'mongoose'
+import { Ticket, Counter, TicketAnswered } from '../models/ticketModels'
+import Users from '../models/usersModels'
+import * as bcrypt from 'bcrypt'
 import * as dotenv from 'dotenv'
 
 const app = new Hono()
@@ -23,10 +26,14 @@ conn.on('error', () => {
 
 const salt = 10
 
+app.use('*', logger())
+app.use('*', prettyJSON())
+app.use('/ticket/*', cors())
+
 app.use('/login', async (c) => {
   const { email, password } = await c.req.json()
 
-  const user = await Users.findOne({ email: email }).exec();
+  const user = await Users.findOne({ email: email })
 
   if(!user) {
     return c.json({message: "User not found"}, {status: 404})
@@ -40,7 +47,8 @@ app.use('/login', async (c) => {
   if(isPasswordValid) {
     const payload = {
       id: user.id.toString(),
-      name: user.username 
+      name: user.username, 
+      role: user.role
     }
 
     const secret = process.env.JWT_SECRET!
@@ -48,10 +56,7 @@ app.use('/login', async (c) => {
     const token = await sign(payload, secret)
 
     return c.json({
-      data: {
-        id: user.id.toString(),
-        name: user.username
-      },
+      data: payload,
       token: token
     })
   } else {
@@ -59,22 +64,36 @@ app.use('/login', async (c) => {
   }
 })
 
-app.use('/ticket/*', (c, next) => {
+app.use('*', (c, next) => {
   const jwtMiddlewaare = jwt({
-    secret: process.env.JWT_SECRET!
+    secret: process.env.JWT_SECRET!,
   })
 
   return jwtMiddlewaare(c, next)
 })
 
-app.post('/register',async (c) => {
+const authorize = (roles: string | string[]) => {
+  return async (c: Context, next: Next) => {
+    const payload = c.get('jwtPayload')
+    if (payload && roles.includes(payload.role)) {
+      await next()
+    } else {
+      return c.json({ message: "Forbidden" }, { status: 403 })
+    }
+  }
+}
+
+app.post('/register', 
+// authorize('Admin'), //jika dibutuhkan
+async (c) => {
   try {
-    const { username, email, password } = await c.req.json()
+    const { username, email, password, role } = await c.req.json()
     const hashedPassword = bcrypt.hashSync(password, salt)
     const users = await Users.create({
       username,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      role
     })
 
     return c.json({ message: "Created", data: users }, { status: 201 })
@@ -84,7 +103,7 @@ app.post('/register',async (c) => {
   }
 })
 
-app.get('/ticket', async (c) => {
+app.get('/ticket', authorize('Admin'), async (c) => {
   const page: number = Number(c.req.query('page')) || 1
   const size: number = Number(c.req.query('size')) || 10
   const skip: number = (page - 1) * size
@@ -101,7 +120,7 @@ app.get('/ticket', async (c) => {
   }
 })
 
-app.post('/ticket', async (c) => {
+app.post('/ticket', authorize('Admin' || 'User'), async (c) => {
   const counter = await Counter.findOneAndUpdate(
     { id: "autoval" },
     { "$inc": { "seq": 1 } },
@@ -146,7 +165,7 @@ app.get('/ticketAnswered/:id', async (c) => {
   }
 })
 
-app.post('/ticket/:number', async (c) => {
+app.post('/ticket/:number', authorize('Admin'), async (c) => {
   const number = c.req.param('number')
   
   try {
@@ -170,7 +189,7 @@ app.post('/ticket/:number', async (c) => {
   }
 })
 
-app.put('/ticket/close/:number', async (c) => {
+app.put('/ticket/close/:number', authorize('User'), async (c) => {
   const number = c.req.param('number')
   
   try {
@@ -187,7 +206,7 @@ app.put('/ticket/close/:number', async (c) => {
   }
 })
 
-app.delete('/ticket/:id', async (c) => {
+app.delete('/ticket/:id', authorize('User'), async (c) => {
   const id = c.req.param('id')
   try {
     const ticket = await Ticket.deleteOne({ _id: id })
