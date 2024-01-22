@@ -9,6 +9,7 @@ import { Ticket, Counter, TicketAnswered } from '../models/ticketModels'
 import Users from '../models/usersModels'
 import * as bcrypt from 'bcrypt'
 import * as dotenv from 'dotenv'
+import { swaggerUI } from '@hono/swagger-ui'
 
 const app = new Hono()
 
@@ -28,7 +29,9 @@ const salt = 10
 
 app.use('*', logger())
 app.use('*', prettyJSON())
-app.use('/ticket/*', cors())
+app.use('*', cors())
+
+app.get('/swagger', swaggerUI({ url: 'https://ticketing.swagger.syahrulap.my.id//' }))
 
 app.use('/login', async (c) => {
   const { email, password } = await c.req.json()
@@ -75,7 +78,7 @@ app.use('/ticket/*', (c, next) => {
 const authorize = (roles: string | string[]) => {
   return async (c: Context, next: Next) => {
     const payload = c.get('jwtPayload')
-    if (payload && roles.includes(payload.role)) {
+    if (roles.includes(payload.role)) {
       await next()
     } else {
       return c.json({ message: "Forbidden" }, { status: 403 })
@@ -144,6 +147,23 @@ app.post('/ticket', authorize('User'), async (c) => {
   } catch (err) {
     console.log(err)
     return c.json({ message: "Vailed" }, { status: 500 })
+  }
+})
+
+app.get('/ticket/answered', authorize('User'), async (c) => { 
+  const page: number = Number(c.req.query('page')) || 1
+  const size: number = Number(c.req.query('size')) || 10
+  const skip: number = (page - 1) * size
+  
+  try {
+    const ticket = await TicketAnswered.find()
+    .skip(skip)
+    .limit(size)
+
+    return c.json({ Ticket: ticket }, { status: 200 })
+  } catch (err) {
+    console.log(err)
+    return c.json({ err: err }, { status: 500 })
   }
 })
 
@@ -237,7 +257,6 @@ app.delete('/ticket/delete/:id', authorize('User'), async (c) => {
     return c.json({message: "Vailed"}, {status: 500})
   }
 })
-
 
 const port = 3000
 console.log(`Server is running on port ${port}`)

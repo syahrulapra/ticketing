@@ -1,0 +1,236 @@
+openapi: 3.0.1
+
+info:
+  title: Ticketing Swagger
+  version: 1.0.0
+  
+servers: 
+- url: "https://ticketing.syahrulap.my.id/"
+
+paths:
+  /register:
+    post:
+      tags:
+      - user
+      summary: Membuat user baru
+      operationId: addUser
+      requestBody:
+        description: Membuat user baru
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content: {}
+  
+  /login:
+    post:
+      tags:
+      - user
+      summary: Login ke aplikasi
+      operationId: login
+      requestBody:
+        description: Login
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: 
+                  type: string
+                  example: ["admin@gmail.com", "user@gmail.com"]
+                password:
+                  type: string
+                  example: "admin123"
+        required: true
+      responses:
+        "200":
+          description: OK
+
+  /ticket:
+    get:
+      tags:
+      - ticket
+      summary: Mendapatkan tiket
+      description: Mendapatkan seluruh data tiket
+      operationId: getTicket
+      responses:
+        "200":
+          description: OK
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - ticket
+      summary: Membuat ticket baru
+      operationId: addTicket
+      requestBody:
+        description: Membuat ticket baru
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Ticket"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content: {}
+      security:
+      - bearerAuth: []
+  
+  /ticket/answered:
+    get:
+      tags:
+      - ticket
+      summary: Mendapatkan tiket yang sudah terjawab
+      description: Mendapatkan data seluruh tiket yang sudah terjawab
+      operationId: getAnsweredTicket
+      responses:
+        "200":
+          description: OK
+          content: {}
+      security:
+      - bearerAuth: []
+  
+  /ticket/answered/{id}:
+    get:
+      tags:
+      - ticket
+      summary: Mencari ticket berdasarkan id
+      description: Mendapatkan data satu ticket
+      operationId: getTicketAnsweredbyId
+      parameters:
+      - name: id
+        in: path
+        description: id ticket
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content: {}
+      security:
+      - bearerAuth: []
+  
+  /ticket/answer/{ticketNumber}:
+    post:
+      tags:
+      - ticket
+      summary: Membalas ticket
+      description: Membalas ticket berdasarkan ticketNumber
+      operationId: answerTicket
+      parameters:
+      - name: ticketNumber
+        in: path
+        description: ticketNumber
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Berikan jawaban
+      responses:
+        "201":
+          description: Created
+          content: {}
+      security:
+      - bearerAuth: []
+  
+  /ticket/close/{ticketNumber}:
+    put:
+      tags:
+      - ticket
+      summary: Menutup ticket
+      description: Menutup ticket berdasarkan ticketNumber
+      operationId: closeTicket
+      parameters:
+      - name: ticketNumber
+        in: path
+        description: ticketNumber
+        required: true
+        schema: 
+           type: string
+      responses:
+        "204":
+          description: Updated
+          content: {}
+      security:
+      - bearerAuth: []
+          
+  /ticket/delete/{id}:
+    delete:
+      tags:
+      - ticket
+      summary: Menghapus ticket
+      description: Menghapus ticket berdasarkan id
+      operationId: deleteTicket
+      parameters:
+      - name: id
+        in: path
+        description: id ticket
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Deleted
+          content: {}
+      security:
+      - bearerAuth: []
+    
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: ["Admin", "User"]
+          default: "User"
+          
+    Ticket:
+      type: object
+      properties:
+        subject:
+          type: string
+        message:
+          type: string
+        status:
+          type: string
+          enum: ["Open", "Answered", "Closed"]
+          default: "Open"
+        priority: 
+          type: string
+          enum: ["Low", "Medium", "High"]
+          
+    TicketAnswered:
+      type: object
+      properties:
+        ticket:
+          $ref: "#/components/schemas/Ticket"
+        message:
+          type: string
+          
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+x-original-swagger-version: "2.0"
